@@ -1,5 +1,7 @@
 # Amux App
 
+AMUX is a revolutionary platform where students can access quality learning for just ₹1, making education affordable, accessible, and impactful for everyone.
+
 Fullstack application with:
 - **Backend**: Node.js/Express/MongoDB API (Amux-backend)
 - **Mobile**: React Native/Expo app (hirhub-mobile, slug: amux)
