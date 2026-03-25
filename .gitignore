@@ -1,0 +1,79 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+!**/assets/**
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+
+# Backend specific
+backend/scripts/
+backend/node_modules/
+backend/coverage/
+backend/.env
+
+# Mobile specific
+mobile/.expo/
+mobile/dist/
+mobile/node_modules/
+mobile/coverage/
+
+# MongoDB
+mongod.lock
+*.bson
+
+# Editor directories
+.vscode/
+.idea/

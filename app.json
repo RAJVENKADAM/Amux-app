@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "hirhub",
+    "slug": "hirhub",
+    "version": "1.0.0",
+    "description": "Professional networking and skill verification platform",
+    "sdkVersion": "54.0.0",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "android": {
+      "package": "com.rajvenkadam.hirhub"
+    }
+  }
+}

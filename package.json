@@ -1,0 +1,48 @@
+{
+  "name": "hirhub",
+  "version": "1.0.0",
+  "description": "Professional networking and skill verification platform",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../mobile && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:mobile": "cd mobile && npm start",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:mobile\"",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "keywords": [
+    "networking",
+    "skill-verification",
+    "github",
+    "professional"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@react-navigation/material-top-tabs": "^7.3.10",
+    "dotenv": "^17.3.1",
+    "expo": "~54.0.33",
+    "expo-dev-client": "~6.0.20",
+    "expo-device": "~8.0.10",
+    "expo-image-picker": "~17.0.10",
+    "expo-linear-gradient": "~15.0.8",
+    "expo-linking": "~8.0.11",
+    "expo-notifications": "~0.32.16",
+    "expo-print": "~15.0.8",
+    "expo-sharing": "~14.0.8",
+    "jspdf": "^4.2.1",
+    "razorpay": "^2.9.6",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-pdf-lib": "^1.0.0",
+    "react-native-youtube-iframe": "^2.4.1"
+  }
+}
