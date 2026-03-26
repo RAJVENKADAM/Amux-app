@@ -4,8 +4,12 @@ const router = express.Router();
 const userController = require('../controllers/user.controller');
 const { authenticateToken } = require('../middleware/auth.middleware');
 
-// Home page: all courses
+// Home page: all courses (public - before param routes)
 router.get('/courses', userController.getAllCourses);
+router.get('/courses/popular', userController.getPopularCourses);
+
+// Get user profile by ID or username (public)
+router.get('/:id', userController.getUserProfile);
 
 // Upload course (protected)
 router.post('/courses', authenticateToken, userController.addCourse);
@@ -13,16 +17,11 @@ router.post('/courses', authenticateToken, userController.addCourse);
 // User courses (public)
 router.get('/:id/courses', userController.getMyCourses);
 
-// Popular courses (public)
-router.get('/courses/popular', userController.getPopularCourses);
-
 // Trust course (protected)
 router.post('/courses/:courseId/trust', authenticateToken, userController.trustCourse);
 
 // Distrust course (protected)
 router.post('/courses/:courseId/distrust', authenticateToken, userController.distrustCourse);
-
-// Profile
 
 // Update profile (protected)
 router.put('/profile', authenticateToken, userController.updateProfile);
@@ -46,5 +45,3 @@ router.get('/me/pinned-courses', authenticateToken, userController.getMyPinnedCo
 router.get('/:userId/saved-courses', userController.getSavedCourses);
 
 module.exports = router;
-
-

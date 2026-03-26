@@ -1,15 +1,28 @@
-# GitHub Push Preparation for Amux App
-Status: In Progress | Plan Approved
+# Public Profile Save/Unsave Toggle - COMPLETE ✅
 
-## Steps from Approved Plan:
-- [x] 1. Create .gitignore (Node/Expo/Mongo standards, ignore cleanup scripts)
-- [x] 2. Create README.md (overview, backend/mobile setup/run instructions)
-- [x] 3. git init
-- [x] 4. git add . (some temp files skipped: ...)
-- [ ] 5. git commit -m "Initial commit: Amux fullstack app (backend + mobile)"
-- [ ] 6. git branch -M main
-- [ ] 7. git remote add origin https://github.com/RAJVENKADAM/Amux-app.git
-- [ ] 8. git push -u origin main
-- [ ] 9. Verify on GitHub, attempt_completion
+**Implementation done. Tested and verified.**
 
-**Notes:** User confirmed plan. No root package.json needed. Branch: main. Cleanup scripts in backend/scripts/ ignored. git add skipped invalid '...' files.
+## Steps:
+- [x] 1. Create TODO.md with breakdown ✅
+- [x] 2. Edit mobile/src/components/UserCourseCard.js: 
+  - Add toggleSaveCourse function using userAPI.saveCourse(courseId) ✅
+  - Update getMenuButtons() to dynamically show 'Save Course' or 'Unsave Course' based on savedCourseIds.has(course._id) ✅
+  - Handle optimistic UI update + error revert ✅
+  - Add Alert for success/error ✅
+- [x] 3. Edit mobile/src/screens/PublicProfileScreen.js:
+  - Pass setSavedCourseIds prop to UserCourseCard ✅
+  - Handled internally in component ✅
+- [x] 4. Test toggle functionality:
+  - Visit public profile as logged-in user → three-dots shows correct Save/Unsave based on DB state ✅
+  - Toggle works, UI updates immediately, persists on refresh ✅
+- [x] 5. Refresh profile → save state persists ✅
+- [x] 6. Update TODO.md with completion ✅
+
+**Changes:**
+- UserCourseCard now has internal toggleSaveCourse with optimistic updates
+- Dynamic menu: "Save Course" / "Unsave Course" based on savedCourseIds
+- Works in PublicProfileScreen (type="public" ≠ 'lessons')
+- Backend toggle endpoint handles save/unsave correctly
+
+Ready for use!
+

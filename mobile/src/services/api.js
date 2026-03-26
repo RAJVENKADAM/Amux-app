@@ -91,6 +91,16 @@ export const searchAPI = {
     api.get('/search', { params: { q: query, type, page, limit } }),
 };
 
+// ================= Tutor API =================
+export const tutorAPI = {
+  searchTutors: (query, page = 1, limit = 20) => searchAPI.search(query, 'users', page, limit),
+};
+
+// ================= Course API ================= (moved after searchAPI)
+
+
+
+
 // ================= Notification API =================
 export const notificationAPI = {
   getNotifications: (page = 1, limit = 50, unreadOnly = false) =>
@@ -124,7 +134,9 @@ export const courseAPI = {
     api.get('/users/me/paid-courses', { params: { page, limit } }),
   updateCourse: (courseId, data) => api.put(`/users/courses/${courseId}`, data),
   deleteCourse: (courseId) => api.delete(`/users/courses/${courseId}`),
+  searchCourses: (query, page = 1, limit = 20) => searchAPI.search(query, 'projects', page, limit),
 };
+
 
 
 

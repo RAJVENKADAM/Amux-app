@@ -48,10 +48,11 @@ exports.search = async (req, res, next) => {
           { description: searchQuery }
         ]
       })
-        .populate('owner', 'name username profilePicture')
+        .populate('owner', 'name username profilePicture bio followers')
         .sort({ stars: -1 })
         .limit(limit * 1)
         .skip((page - 1) * limit);
+
 
       results.courses = courses;
     }

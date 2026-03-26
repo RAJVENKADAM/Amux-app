@@ -1,175 +1,206 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  ScrollView,
   TextInput,
   TouchableOpacity,
   FlatList,
   Keyboard,
-  Animated
+  Alert,
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { courseAPI, tutorAPI } from '../services/api'; // assume you have tutorAPI
+import { useAuth } from '../context/AuthContext';
+import { paymentAPI } from '../services/api';
+import { courseSearchAPI as courseAPI, tutorSearchAPI as tutorAPI } from '../services/searchAPI';
+import AuthorCard from '../components/AuthorCard';
+import { useNavigation } from '@react-navigation/native';
 
-const SearchScreen = ({ navigation, route }) => {
+const SearchScreen = () => {
+  const navigation = useNavigation();
   const { theme } = useTheme();
-  const [query, setQuery] = useState('');
-  const [predictions, setPredictions] = useState([]);
-  const [results, setResults] = useState([]);
-  const [showResults, setShowResults] = useState(false);
+  const { user: authUser } = useAuth();
 
-  // Fetch predictions while typing
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState({ courses: [], users: [] });
+  const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState([]);
+
+  // Load payments
   useEffect(() => {
-    if (query.trim() === '') {
-      setPredictions([]);
-      setShowResults(false);
+    if (authUser?._id) {
+      paymentAPI.getMyPayments()
+        .then(res => setPayments(res.data.payments || []))
+        .catch(err => console.log(err));
+    }
+  }, [authUser]);
+
+  // Check paid
+  const isCoursePaid = useCallback((courseId) => {
+    return payments.some(p => p.status === 'paid' && p.course?._id === courseId);
+  }, [payments]);
+
+  // Course click
+  const handleCoursePress = useCallback((course) => {
+    if (!authUser) {
+      Alert.alert('Login Required', 'Please login to access courses');
       return;
     }
 
-    const fetchPredictions = async () => {
+    if (isCoursePaid(course._id)) {
+      navigation.navigate('CoursePlaylist', { course, isPurchased: true });
+    } else {
+      navigation.navigate('CoursePayment', { course });
+    }
+  }, [authUser, isCoursePaid]);
+
+  // Tutor click
+  const handleTutorPress = useCallback((user) => {
+    navigation.navigate('PublicProfile', { userId: user._id || user.username });
+  }, []);
+
+  // Live search
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults({ courses: [], users: [] });
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
       try {
-        // Simulate predictive search
-        const courseRes = await courseAPI.searchCourses(query); // returns array
-        const tutorRes = await tutorAPI.searchTutors(query); // returns array
+        setLoading(true);
 
-        const combined = [
-          ...courseRes?.data?.data?.courses || [],
-          ...tutorRes?.data?.data?.tutors || [],
-        ];
+        const courseRes = await courseAPI.searchCourses(query);
+        const tutorRes = await tutorAPI.searchTutors(query);
 
-        // Only show top 5 suggestions
-        setPredictions(combined.slice(0, 5));
+        setResults({
+          courses: courseRes?.data?.data?.courses || [],
+          users: tutorRes?.data?.data?.users || [],
+        });
+
       } catch (err) {
-        console.log('Prediction error', err);
+        console.log(err);
+      } finally {
+        setLoading(false);
       }
-    };
+    }, 400);
 
-    fetchPredictions();
+    return () => clearTimeout(timeout);
   }, [query]);
 
-  // When user selects a suggestion
-  const handleSelect = (item) => {
-    setQuery(item.name || item.title); // fill the search bar
-    setShowResults(true);
-    setPredictions([]);
-    Keyboard.dismiss();
-  };
+  // Combine results
+  const combinedResults = [
+    ...results.courses.map(c => ({ ...c, type: 'course' })),
+    ...results.users.map(u => ({ ...u, type: 'user' }))
+  ];
 
-  // Render each prediction item
-  const renderPrediction = ({ item }) => (
-    <TouchableOpacity style={styles.predictionItem} onPress={() => handleSelect(item)}>
-      <Text style={[styles.predictionText, { color: theme.text }]}>{item.name || item.title}</Text>
-    </TouchableOpacity>
-  );
+  // Render item
+  const renderItem = ({ item }) => {
+    if (item.type === 'course') {
+      return (
+        <TouchableOpacity
+          style={[styles.courseCard, { backgroundColor: theme.card }]}
+          onPress={() => handleCoursePress(item)}
+        >
+          {/* Thumbnail */}
+          <Image
+            source={{ uri: item.thumbnail || item.previewImage }}
+            style={styles.thumbnail}
+          />
 
-  // Render search result item
-  const renderResult = ({ item }) => (
-    <View style={[styles.resultCard, { backgroundColor: theme.card }]}>
-      <Text style={[styles.resultTitle, { color: theme.text }]}>{item.name || item.title}</Text>
-      {item.type && <Text style={[styles.resultType, { color: theme.textSecondary }]}>{item.type}</Text>}
-    </View>
-  );
+          {/* Content */}
+          <View style={styles.courseInfo}>
+            <Text
+              style={[styles.courseTitle, { color: theme.text }]}
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
 
-  // Fetch results manually (when pressing enter)
-  const handleSearch = async () => {
-    if (query.trim() === '') return;
-    try {
-      const courseRes = await courseAPI.searchCourses(query);
-      const tutorRes = await tutorAPI.searchTutors(query);
-
-      const combined = [
-        ...(courseRes?.data?.data?.courses || []).map((c) => ({ ...c, type: 'Course' })),
-        ...(tutorRes?.data?.data?.tutors || []).map((t) => ({ ...t, type: 'Tutor' })),
-      ];
-
-      setResults(combined);
-      setShowResults(true);
-      setPredictions([]);
-      Keyboard.dismiss();
-    } catch (err) {
-      console.log('Search error', err);
-      setResults([]);
+            <Text
+              style={[styles.courseDesc, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              {item.description || 'No description available'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      );
     }
-  };
 
-  const scrollY = route.params?.scrollY;
+    return (
+      <AuthorCard
+        user={item}
+        onPress={() => handleTutorPress(item)}
+      />
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView style={styles.scrollContainer}
-        contentContainerStyle={{ paddingBottom: 80 }}
-        onScroll={(event) => scrollY?.setValue(event.nativeEvent.contentOffset.y)}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header with Back and Search */}
-        <View style={styles.header}>
+
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={theme.text} />
         </TouchableOpacity>
+
         <TextInput
           placeholder="Search courses, tutors..."
           placeholderTextColor="#888"
           style={[styles.searchInput, { color: theme.text, backgroundColor: theme.card }]}
           value={query}
           onChangeText={setQuery}
-          returnKeyType="search"
-          onSubmitEditing={handleSearch}
         />
+
         {query.length > 0 && (
-          <TouchableOpacity onPress={() => { setQuery(''); setPredictions([]); setShowResults(false); }}>
+          <TouchableOpacity onPress={() => setQuery('')}>
             <Feather name="x" size={20} color="#888" />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Predictions */}
-      {predictions.length > 0 && !showResults && (
-        <FlatList
-          data={predictions}
-          keyExtractor={(item, index) => item._id || index.toString()}
-          renderItem={renderPrediction}
-          keyboardShouldPersistTaps="handled"
-        />
+      {/* Loading */}
+      {loading && (
+        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
       )}
 
       {/* Results */}
-      {showResults && results.length > 0 && (
-        <FlatList
-          data={results}
-          keyExtractor={(item, index) => item._id || index.toString()}
-          renderItem={renderResult}
-          contentContainerStyle={{ paddingBottom: 80 }}
-        />
-      )}
+      <FlatList
+        data={combinedResults}
+        keyExtractor={(item, index) => item._id || index.toString()}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      />
 
-      {/* Empty state */}
-      {showResults && results.length === 0 && (
+      {/* Empty */}
+      {!loading && combinedResults.length === 0 && query.length > 0 && (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-            No results found.
+          <Text style={{ color: theme.textSecondary }}>
+            No results found
           </Text>
         </View>
       )}
-      </ScrollView>
+
     </SafeAreaView>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    padding: 10,
     gap: 8,
   },
+
   searchInput: {
     flex: 1,
     borderRadius: 24,
@@ -177,28 +208,42 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 16,
   },
-  predictionItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  predictionText: { fontSize: 16 },
-  resultCard: {
-    marginHorizontal: 16,
-    marginVertical: 8,
+
+  // 🎓 Course UI
+  courseCard: {
+    flexDirection: 'row',
+    marginHorizontal: 12,
+    marginVertical: 6,
+    padding: 10,
     borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    alignItems: 'center',
   },
-  resultTitle: { fontSize: 16, fontFamily: 'Poppins_500Medium' },
-  resultType: { fontSize: 12, marginTop: 4 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 },
-  emptyText: { fontSize: 18, textAlign: 'center' },
+
+  thumbnail: {
+    width: 100,
+    height: 56, // 16:9 ratio
+    borderRadius: 8,
+  },
+
+  courseInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+
+  courseTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  courseDesc: {
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 50,
+  },
 });
 
 export default SearchScreen;

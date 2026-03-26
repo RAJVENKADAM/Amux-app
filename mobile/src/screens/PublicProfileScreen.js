@@ -253,8 +253,10 @@ const PublicProfileScreen = () => {
         renderItem={({ item: course }) => (
           <UserCourseCard 
             course={course} 
+            type="public"
             onPress={() => handleCoursePress(course)} 
             savedCourseIds={savedCourseIds}
+            setSavedCourseIds={setSavedCourseIds}
           />
         )}
         keyExtractor={(item) => item._id}

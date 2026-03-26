@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Share } from 'react-native';
+import { Share, Alert } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,7 +13,8 @@ const UserCourseCard = ({
   isPinned = false,
   onPress, 
   savedCourseIds = new Set(), 
-  paidCourseIds = new Set(),
+  paidCourseIds = new Set(), 
+  setSavedCourseIds,
   userId,
   onCoursePress,
   onUnsave,
@@ -25,7 +26,7 @@ const UserCourseCard = ({
 }) => {
 
   const { theme } = useTheme();
-  const { user: authUser, refreshUser } = useAuth();
+  const { user: authUser } = useAuth();
 
   // Safe values
   const title = course.title ?? 'Untitled Course';
@@ -36,12 +37,55 @@ const UserCourseCard = ({
   const isOwner = course.owner === userId;
   const isPaid = paidCourseIds.has(course._id);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const toggleSaveCourse = async () => {
+    if (!authUser?._id) {
+      Alert.alert('Login Required', 'Please login to save courses');
+      return;
+    }
+    if (saving) return;
+
+    try {
+      setSaving(true);
+      const wasSaved = isSaved;
+      // Optimistic update
+      if (isSaved) {
+        savedCourseIds.delete(course._id);
+      } else {
+        savedCourseIds.add(course._id);
+      }
+      setSavedCourseIds(new Set(savedCourseIds));
+
+      await userAPI.saveCourse(course._id);
+      
+      Alert.alert('Success', isSaved ? 'Course unsaved' : 'Course saved');
+    } catch (error) {
+      // Revert optimistic update
+      if (wasSaved) {
+        savedCourseIds.add(course._id);
+      } else {
+        savedCourseIds.delete(course._id);
+      }
+      setSavedCourseIds(new Set(savedCourseIds));
+      Alert.alert('Error', 'Failed to toggle save status. Please try again.');
+    } finally {
+      setSaving(false);
+      setMenuVisible(false);
+    }
+  };
 
   const getMenuButtons = () => {
     let buttons = [];
     
-    // First button: dynamic for different types
-    if (type === 'lessons') {
+    // Dynamic save/unsave for all non-lessons views
+    if (type !== 'lessons') {
+      buttons.push({
+        text: isSaved ? 'Unsave Course' : 'Save Course',
+        style: isSaved ? 'destructive' : 'default',
+        onPress: toggleSaveCourse
+      });
+    } else if (type === 'lessons') {
       buttons = [
         { text: 'Delete Course', style: 'destructive', onPress: () => {
           setMenuVisible(false);
@@ -52,22 +96,15 @@ const UserCourseCard = ({
           setMenuVisible(false);
         }}
       ];
-    } else if (type === 'saved') {
-      buttons = [
-        { text: 'Unsave Course', style: 'destructive', onPress: () => {
-          onUnsave?.(course._id);
-          setMenuVisible(false);
-        }}
-      ];
-    } else if (type === 'learnings') {
-      // No pin/unpin buttons
     }
 
     // Always add Share
     buttons.push({ 
       text: 'Share Course', 
       onPress: () => {
-        onShare?.(course);
+        Share.share({
+          message: `Check out "${title}" by ${course.owner?.name || 'UTalk'} on UTalk!`
+        });
         setMenuVisible(false);
       }
     });

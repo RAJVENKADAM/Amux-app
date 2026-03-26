@@ -27,10 +27,14 @@ const userRoutes = require("./routes/user.routes");
 const uploadRoutes = require("./routes/upload.routes");
 const paymentRoutes = require("./routes/payment.routes");
 const followRoutes = require("./routes/follow.routes");
+const searchRoutes = require("./routes/search.routes");
+const feedRoutes = require("./routes/feed.routes");
 
 // JSON first
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/search", searchRoutes);
+app.use("/api/feed", feedRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/payment", paymentRoutes);
 

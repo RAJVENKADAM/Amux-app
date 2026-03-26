@@ -86,7 +86,8 @@ exports.addCourse = async (req, res, next) => {
 // Get user profile - FIXED: Single query, no lean(), proper populate
 exports.getUserProfile = async (req, res, next) => {
   try {
-    const { identifier } = req.params;
+const { id: identifier } = req.params;
+    console.log('🔍 Route param id:', req.params.id, 'identifier:', identifier);
     
     console.log('🔍 getUserProfile identifier:', identifier, typeof identifier);
     
